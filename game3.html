@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>타이밍 리듬 브레이커</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>⚡ 타이밍 리듬 브레이커</h2>
+<p class="desc">바 위를 고속 왕복하는 바늘이<br><span style="color:var(--success)"><b>초록색 크리티컬 존</b></span>에 위치할 때 타이밍 맞춰 클릭하세요!</p>
+<div class="score-board">
+    <div>현재 콤보: <span id="combo" class="score-val">0</span></div>
+    <div>최고 콤보: <span id="bestCombo">-</span></div>
+</div>
+<div id="barContainer" style="width:100%; height:30px; background:#0f172a; border-radius:15px; position:relative; margin:40px 0; overflow:hidden; border: 1px solid #334155;">
+    <div id="targetZone" style="position:absolute; height:100%; background:var(--success); width:40px; left:180px;"></div>
+    <div id="pointer" style="position:absolute; height:100%; width:6px; background:#ffffff; left:0; box-shadow: 0 0 10px #fff;"></div>
+</div>
+<button id="hitBtn" class="main-action">HIT! (Space)</button>
+<div id="status" style="margin-top:20px; font-weight:bold; font-size:1.2rem; min-height:1.5em;"></div>
+
+<script>
+    let pointerPos = 0;
+    let direction = 1;
+    let speed = 4;
+    let combo = 0;
+    let targetLeft = 180;
+    let targetWidth = 40;
+    let animId;
+    
+    const pointer = document.getElementById('pointer');
+    const targetZone = document.getElementById('targetZone');
+    const comboDisp = document.getElementById('combo');
+    const bestDisp = document.getElementById('bestCombo');
+    const hitBtn = document.getElementById('hitBtn');
+    const status = document.getElementById('status');
+    const containerWidth = 540; // 600px max container padding excluded roughly
+    
+    let best = localStorage.getItem('g3_best') ? parseInt(localStorage.getItem('g3_best')) : 0;
+    bestDisp.innerText = best;
+
+    function update() {
+        let maxLeft = document.getElementById('barContainer').clientWidth - 6;
+        pointerPos += direction * speed;
+        if(pointerPos >= maxLeft) { pointerPos = maxLeft; direction = -1; }
+        if(pointerPos <= 0) { pointerPos = 0; direction = 1; }
+        pointer.style.left = pointerPos + 'px';
+        animId = requestAnimationFrame(update);
+    }
+    
+    function resetTarget() {
+        let cWidth = document.getElementById('barContainer').clientWidth;
+        targetWidth = Math.max(45 - combo * 1.5, 12);
+        targetLeft = Math.random() * (cWidth - targetWidth - 40) + 20;
+        targetZone.style.width = targetWidth + 'px';
+        targetZone.style.left = targetLeft + 'px';
+        speed = 4 + (combo * 0.4);
+    }
+
+    function triggerHit() {
+        let pLeft = pointerPos;
+        if(pLeft >= targetLeft && pLeft <= (targetLeft + targetWidth)) {
+            combo++;
+            status.innerText = '🎯 CRITICAL HIT!';
+            status.style.color = 'var(--success)';
+            if(combo > best) {
+                best = combo;
+                localStorage.setItem('g3_best', best);
+                bestDisp.innerText = '★ ' + best;
+            }
+        } else {
+            combo = 0;
+            status.innerText = '💥 MISS!';
+            status.style.color = 'var(--danger)';
+        }
+        comboDisp.innerText = combo;
+        resetTarget();
+    }
+
+    hitBtn.addEventListener('click', triggerHit);
+    window.addEventListener('keydown', (e) => { if(e.code === 'Space') { e.preventDefault(); triggerHit(); } });
+    
+    // Initial adjust on load
+    setTimeout(() => { resetTarget(); update(); }, 100);
+</script>
+    </div>
+</body>
+</html>

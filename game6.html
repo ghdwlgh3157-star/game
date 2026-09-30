@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중력 반전 러너</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>🚀 중력 반전 러너</h2>
+<p class="desc">캔버스 영역을 클릭할 때마다 플레이어의 <b>중력이 상하 반전</b>됩니다.<br>천장과 바닥을 날카롭게 타며 장애물을 극도로 피하세요!</p>
+<div class="score-board">
+    <div>생존 점수: <span id="runnerScore" class="score-val">0</span></div>
+    <div>최고 점수: <span id="bestRunner">-</span></div>
+</div>
+<canvas id="gameCanvas" width="540" height="240" style="background:#0f172a; border-radius:12px; border:1px solid #334155; display:block; margin:0 auto; cursor:pointer;"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisp = document.getElementById('runnerScore');
+    const bestDisp = document.getElementById('bestRunner');
+    
+    let isPlaying = false;
+    let score = 0;
+    let player = { x: 50, y: 190, w: 20, h: 20, gravity: 0.6, vy: 0, onCeil: false };
+    let obstacles = [];
+    let frame = 0;
+    let loopId;
+    
+    let best = localStorage.getItem('g6_best') ? parseInt(localStorage.getItem('g6_best')) : 0;
+    bestDisp.innerText = best;
+
+    function initGame() {
+        score = 0;
+        player.y = 190;
+        player.vy = 0;
+        player.gravity = 0.6;
+        obstacles = [];
+        frame = 0;
+    }
+
+    canvas.addEventListener('click', () => {
+        if(!isPlaying) {
+            isPlaying = true;
+            initGame();
+            gameLoop();
+            return;
+        }
+        player.gravity = -player.gravity; 
+    });
+
+    function spawnObstacle() {
+        let h = Math.random() * 40 + 20;
+        let isTop = Math.random() > 0.5;
+        obstacles.push({
+            x: canvas.width,
+            y: isTop ? 0 : canvas.height - h,
+            w: 15,
+            h: h,
+            speed: 4 + Math.floor(score / 200)
+        });
+    }
+
+    function gameLoop() {
+        if(!isPlaying) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        frame++;
+        score++;
+        scoreDisp.innerText = Math.floor(score / 10);
+        
+        // Player movement
+        player.vy += player.gravity;
+        player.y += player.vy;
+        
+        // Floor constraints
+        if(player.y > canvas.height - player.h) {
+            player.y = canvas.height - player.h;
+            player.vy = 0;
+        }
+        // Ceiling constraints
+        if(player.y < 0) {
+            player.y = 0;
+            player.vy = 0;
+        }
+        
+        // Draw Player
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        
+        // Spawn Obstacles
+        if(frame % 80 === 0) spawnObstacle();
+        
+        // Draw & Update Obstacles
+        ctx.fillStyle = 'var(--danger)';
+        for(let i = obstacles.length - 1; i >= 0; i--) {
+            let o = obstacles[i];
+            o.x -= o.speed;
+            ctx.fillRect(o.x, o.y, o.w, o.h);
+            
+            // Crash test
+            if(player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
+                isPlaying = false;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = '#fff';
+                ctx.font = '24px sans-serif';
+                ctx.fillText('Game Over! 클릭 시 재시작', canvas.width/2 - 130, canvas.height/2);
+                
+                let finalScore = Math.floor(score / 10);
+                if(finalScore > best) {
+                    best = finalScore;
+                    localStorage.setItem('g6_best', best);
+                    bestDisp.innerText = '★ ' + best;
+                }
+                return;
+            }
+            if(o.x < -20) obstacles.splice(i, 1);
+        }
+        
+        loopId = requestAnimationFrame(gameLoop);
+    }
+    
+    // Welcome message
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('캔버스를 클릭하여 게임을 시작하세요.', canvas.width/2 - 140, canvas.height/2);
+</script>
+    </div>
+</body>
+</html>

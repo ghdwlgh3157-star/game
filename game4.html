@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마우스 탄막 회피령</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>☄️ 마우스 탄막 회피령</h2>
+<p class="desc">녹색 영역에 마우스를 올리면 게임이 시작됩니다.<br>사방에서 날아오는 주황색 구체들을 피해 마우스를 움직이세요!</p>
+<div class="score-board">
+    <div>생존 시간: <span id="liveTime" class="score-val">0.0초</span></div>
+    <div>최고 기록: <span id="bestTime">-</span></div>
+</div>
+<div id="gameBox" style="width:100%; height:350px; background:#0f172a; border-radius:12px; position:relative; overflow:hidden; border: 2px dashed #475569; cursor:none;">
+    <div id="startArea" style="position:absolute; width:60px; height:60px; background:rgba(16,185,129,0.3); border:2px solid var(--success); border-radius:50%; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:bold; color:#fff; pointer-events:auto;">대기</div>
+    <div id="player" style="position:absolute; width:12px; height:12px; background:#3b82f6; border-radius:50%; pointer-events:none; display:none; transform:translate(-50%,-50%); box-shadow:0 0 8px #3b82f6;"></div>
+</div>
+
+<script>
+    const gameBox = document.getElementById('gameBox');
+    const startArea = document.getElementById('startArea');
+    const player = document.getElementById('player');
+    const timeDisp = document.getElementById('liveTime');
+    const bestDisp = document.getElementById('bestTime');
+    
+    let active = false;
+    let startTime;
+    let bullets = [];
+    let loopId;
+    let bTimer = 0;
+    
+    let best = localStorage.getItem('g4_best') ? parseFloat(localStorage.getItem('g4_best')) : 0;
+    bestDisp.innerText = best.toFixed(1) + '초';
+
+    startArea.addEventListener('mouseenter', () => {
+        if(active) return;
+        active = true;
+        startTime = performance.now();
+        bullets = [];
+        startArea.style.display = 'none';
+        player.style.display = 'block';
+    });
+
+    gameBox.addEventListener('mousemove', (e) => {
+        if(!active) return;
+        let rect = gameBox.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        player.style.left = x + 'px';
+        player.style.top = y + 'px';
+        
+        // Quick boundary crash test
+        if(x < 0 || x > rect.width || y < 0 || y > rect.height) { endGame(); }
+    });
+    
+    gameBox.addEventListener('mouseleave', () => { if(active) endGame(); });
+
+    function spawnBullet() {
+        let rect = gameBox.getBoundingClientRect();
+        let side = Math.floor(Math.random() * 4);
+        let x, y, vx, vy;
+        
+        if(side===0) { x=0; y=Math.random()*rect.height; vx=Math.random()*3+1; vy=Math.random()*4-2; }
+        else if(side===1) { x=rect.width; y=Math.random()*rect.height; vx=-(Math.random()*3+1); vy=Math.random()*4-2; }
+        else if(side===2) { x=Math.random()*rect.width; y=0; vx=Math.random()*4-2; vy=Math.random()*3+1; }
+        else { x=Math.random()*rect.width; y=rect.height; vx=Math.random()*4-2; vy=-(Math.random()*3+1); }
+        
+        let el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.width = '10px';
+        el.style.height = '10px';
+        el.style.background = 'var(--danger)';
+        el.style.borderRadius = '50%';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        gameBox.appendChild(el);
+        
+        bullets.push({ el: el, x: x, y: y, vx: vx, vy: vy });
+    }
+
+    function gameLoop() {
+        if(!active) return;
+        let rect = gameBox.getBoundingClientRect();
+        let curTime = (performance.now() - startTime) / 1000;
+        timeDisp.innerText = curTime.toFixed(1) + '초';
+        
+        bTimer++;
+        if(bTimer % Math.max(3, 15 - Math.floor(curTime)) === 0) { spawnBullet(); }
+        
+        let px = parseFloat(player.style.left);
+        let py = parseFloat(player.style.top);
+        
+        for(let i=bullets.length-1; i>=0; i--) {
+            let b = bullets[i];
+            b.x += b.vx;
+            b.y += b.vy;
+            b.el.style.left = b.x + 'px';
+            b.el.style.top = b.y + 'px';
+            
+            // Check collision
+            let dx = b.x + 5 - px;
+            let dy = b.y + 5 - py;
+            if(Math.sqrt(dx*dx + dy*dy) < 11) { endGame(); return; }
+            
+            // Out of bounds remove
+            if(b.x < -20 || b.x > rect.width+20 || b.y < -20 || b.y > rect.height+20) {
+                b.el.remove();
+                bullets.splice(i, 1);
+            }
+        }
+        loopId = requestAnimationFrame(gameLoop);
+    }
+    
+    function endGame() {
+        if(!active) return;
+        active = false;
+        cancelAnimationFrame(loopId);
+        let score = (performance.now() - startTime) / 1000;
+        bullets.forEach(b => b.el.remove());
+        bullets = [];
+        player.style.display = 'none';
+        startArea.style.display = 'flex';
+        startArea.innerText = '재도전';
+        
+        if(score > best) {
+            best = score;
+            localStorage.setItem('g4_best', best);
+            bestDisp.innerText = '★ ' + best.toFixed(1) + '초';
+        }
+    }
+    
+    setInterval(() => { if(active) gameLoop(); }, 16);
+</script>
+    </div>
+</body>
+</html>

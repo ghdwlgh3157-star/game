@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스트룹 뇌 정지 제어기</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>🧠 스트룹 뇌 정지 제어기</h2>
+<p class="desc">글자의 인지적 의미에 속지 마세요!<br>화면에 보이는 글자가 적혀진 <b>실제 폰트 색상</b> 버튼을 빠르게 누르세요.</p>
+<div class="score-board">
+    <div>현재 점수: <span id="currentScore" class="score-val">0</span></div>
+    <div>남은 시간: <span id="timer" style="color:var(--danger); font-weight:bold;">10.0s</span></div>
+    <div>최고 점수: <span id="bestScore">-</span></div>
+</div>
+<div id="wordDisplay" style="font-size: 3.5rem; font-weight: bold; margin: 30px 0; min-height: 1.2em;">준비</div>
+<div id="btnGroup" style="display:flex; justify-content:center; gap:15px; margin-top:20px;">
+    <button class="main-action" style="background:#ef4444;" onclick="checkAnswer('#ef4444')">빨강</button>
+    <button class="main-action" style="background:#3b82f6;" onclick="checkAnswer('#3b82f6')">파랑</button>
+    <button class="main-action" style="background:#10b981;" onclick="checkAnswer('#10b981')">초록</button>
+    <button class="main-action" style="background:#eab308; color:#000;" onclick="checkAnswer('#eab308')">노랑</button>
+</div>
+
+<script>
+    const words = ["빨강", "파랑", "초록", "노랑"];
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#eab308"];
+    let score = 0;
+    let timeLeft = 10.0;
+    let isPlaying = false;
+    let currentTargetColor = "";
+    let tInterval;
+    
+    const wordDisplay = document.getElementById('wordDisplay');
+    const scoreDisp = document.getElementById('currentScore');
+    const timerDisp = document.getElementById('timer');
+    const bestDisp = document.getElementById('bestScore');
+    
+    let best = localStorage.getItem('g5_best') ? parseInt(localStorage.getItem('g5_best')) : 0;
+    bestDisp.innerText = best;
+
+    function nextQuestion() {
+        let textIdx = Math.floor(Math.random() * words.length);
+        let colorIdx = Math.floor(Math.random() * colors.length);
+        
+        wordDisplay.innerText = words[textIdx];
+        wordDisplay.style.color = colors[colorIdx];
+        currentTargetColor = colors[colorIdx];
+    }
+
+    function checkAnswer(chosenColor) {
+        if(!isPlaying) {
+            // Click any to start game
+            isPlaying = true;
+            score = 0;
+            timeLeft = 10.0;
+            scoreDisp.innerText = score;
+            nextQuestion();
+            tInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if(timeLeft <= 0) {
+                    clearInterval(tInterval);
+                    isPlaying = false;
+                    wordDisplay.innerText = '종료!';
+                    wordDisplay.style.color = '#fff';
+                    if(score > best) {
+                        best = score;
+                        localStorage.setItem('g5_best', best);
+                        bestDisp.innerText = '★ ' + best;
+                    }
+                }
+                timerDisp.innerText = Math.max(0, timeLeft).toFixed(1) + 's';
+            }, 100);
+            return;
+        }
+        
+        if(chosenColor === currentTargetColor) {
+            score++;
+            timeLeft += 0.8; // Bonus time
+            scoreDisp.innerText = score;
+            nextQuestion();
+        } else {
+            timeLeft -= 1.5; // Penalty
+            nextQuestion();
+        }
+    }
+</script>
+    </div>
+</body>
+</html>

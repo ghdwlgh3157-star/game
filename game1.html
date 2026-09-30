@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>눈감고 7.00초 점프</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>⏱️ 눈감고 7.00초 점프</h2>
+<p class="desc">시작 후 3초가 지나면 타이머가 ???로 가려집니다.<br>정확히 <b>7.00초</b>가 되었다고 생각할 때 멈추세요! (성공 기준: ±0.15초 오차)</p>
+<div class="score-board">
+    <div>현재 기록: <span id="current">0.00초</span></div>
+    <div>최고 오차: <span id="best" class="score-val">-</span></div>
+</div>
+<div id="display" style="font-size: 4rem; font-weight: bold; margin: 40px 0; font-family: monospace;">0.00</div>
+<button id="actionBtn" class="main-action">시작</button>
+<div id="result" style="margin-top: 20px; font-weight: bold; font-size: 1.2rem;"></div>
+
+<script>
+    let startTime, timerId;
+    let running = false;
+    const display = document.getElementById('display');
+    const actionBtn = document.getElementById('actionBtn');
+    const result = document.getElementById('result');
+    const bestDisp = document.getElementById('best');
+    
+    let bestDiff = localStorage.getItem('g1_best') ? parseFloat(localStorage.getItem('g1_best')) : null;
+    if(bestDiff !== null) bestDisp.innerText = '±' + bestDiff.toFixed(2) + '초';
+
+    actionBtn.addEventListener('click', () => {
+        if(!running) {
+            running = true;
+            actionBtn.innerText = '스톱!';
+            result.innerText = '';
+            startTime = performance.now();
+            timerId = setInterval(() => {
+                let elapsed = (performance.now() - startTime) / 1000;
+                if(elapsed >= 3.0) {
+                    display.innerText = '?.??';
+                } else {
+                    display.innerText = elapsed.toFixed(2);
+                }
+            }, 30);
+        } else {
+            running = false;
+            clearInterval(timerId);
+            actionBtn.innerText = '다시 시작';
+            let finalTime = (performance.now() - startTime) / 1000;
+            display.innerText = finalTime.toFixed(2);
+            document.getElementById('current').innerText = finalTime.toFixed(2) + '초';
+            
+            let diff = Math.abs(finalTime - 7.00);
+            if(diff <= 0.15) {
+                result.innerText = `🎉 대성공! 오차: ±${diff.toFixed(2)}초`;
+                result.style.color = 'var(--success)';
+            } else {
+                result.innerText = `실패! 오차: ±${diff.toFixed(2)}초`;
+                result.style.color = 'var(--danger)';
+            }
+            
+            if(bestDiff === null || diff < bestDiff) {
+                bestDiff = diff;
+                localStorage.setItem('g1_best', bestDiff);
+                bestDisp.innerText = '★ ±' + bestDiff.toFixed(2) + '초';
+            }
+        }
+    });
+</script>
+    </div>
+</body>
+</html>

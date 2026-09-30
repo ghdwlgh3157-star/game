@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카멜레온 스파이 찾기</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            align-self: flex-start;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #334155;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        h2 { margin-top: 0; font-size: 1.8rem; }
+        .desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .score-val { font-weight: bold; color: var(--accent); }
+        button.main-action {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.main-action:hover { background-color: #2563eb; }
+        button.main-action:disabled { background-color: #475569; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 메인화면으로</a>
+    <div class="game-container">
+        <h2>👁️ 카멜레온 스파이 찾기</h2>
+<p class="desc">제한 시간 15초 내에 수많은 타일 중<br><b>단 하나만 다른 색상</b>을 지닌 스파이 타일을 클릭하세요!</p>
+<div class="score-board">
+    <div>현재 라운드: <span id="currentScore" class="score-val">1</span></div>
+    <div>남은 시간: <span id="timer" style="color:var(--danger); font-weight:bold;">15.0s</span></div>
+    <div>최고 라운드: <span id="bestScore">-</span></div>
+</div>
+<div id="grid" style="display: grid; gap: 6px; width: 320px; height: 320px; margin: 20px auto; background:#0f172a; padding:8px; border-radius:12px;"></div>
+<button id="startBtn" class="main-action">게임 시작</button>
+
+<script>
+    let score = 1;
+    let timeLeft = 15.0;
+    let gameInterval, timerInterval;
+    let isPlaying = false;
+    
+    const grid = document.getElementById('grid');
+    const startBtn = document.getElementById('startBtn');
+    const timerDisp = document.getElementById('timer');
+    const scoreDisp = document.getElementById('currentScore');
+    const bestDisp = document.getElementById('bestScore');
+    
+    let best = localStorage.getItem('g2_best') ? parseInt(localStorage.getItem('g2_best')) : 1;
+    bestDisp.innerText = best;
+
+    function generateRound() {
+        grid.innerHTML = '';
+        let size = Math.min(2 + Math.floor(score / 3), 7); 
+        grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        
+        let baseR = Math.floor(Math.random() * 180) + 40;
+        let baseG = Math.floor(Math.random() * 180) + 40;
+        let baseB = Math.floor(Math.random() * 180) + 40;
+        
+        let diff = Math.max(35 - score * 1.5, 3); 
+        let spyR = baseR + (Math.random() > 0.5 ? diff : -diff);
+        let spyG = baseG + (Math.random() > 0.5 ? diff : -diff);
+        let spyB = baseB + (Math.random() > 0.5 ? diff : -diff);
+        
+        let totalTiles = size * size;
+        let spyIndex = Math.floor(Math.random() * totalTiles);
+        
+        for(let i=0; i<totalTiles; i++) {
+            let tile = document.createElement('div');
+            tile.style.borderRadius = '6px';
+            tile.style.cursor = 'pointer';
+            if(i === spyIndex) {
+                tile.style.backgroundColor = `rgb(${spyR}, ${spyG}, ${spyB})`;
+                tile.addEventListener('click', () => {
+                    if(!isPlaying) return;
+                    score++;
+                    scoreDisp.innerText = score;
+                    timeLeft = Math.min(timeLeft + 2, 15);
+                    generateRound();
+                });
+            } else {
+                tile.style.backgroundColor = `rgb(${baseR}, ${baseG}, ${baseB})`;
+                tile.addEventListener('click', () => {
+                    if(!isPlaying) return;
+                    timeLeft = Math.max(timeLeft - 2, 0);
+                });
+            }
+            grid.appendChild(tile);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        if(isPlaying) return;
+        isPlaying = true;
+        score = 1;
+        timeLeft = 15.0;
+        scoreDisp.innerText = score;
+        startBtn.style.display = 'none';
+        generateRound();
+        
+        timerInterval = setInterval(() => {
+            timeLeft -= 0.1;
+            if(timeLeft <= 0) {
+                timeLeft = 0;
+                clearInterval(timerInterval);
+                isPlaying = false;
+                grid.innerHTML = '<div style="grid-column: 1/-1; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; color:var(--danger)">Game Over!</div>';
+                startBtn.style.display = 'inline-block';
+                startBtn.innerText = '재도전';
+                if(score > best) {
+                    best = score;
+                    localStorage.setItem('g2_best', best);
+                    bestDisp.innerText = '★ ' + best;
+                }
+            }
+            timerDisp.innerText = timeLeft.toFixed(1) + 's';
+        }, 100);
+    });
+</script>
+    </div>
+</body>
+</html>
