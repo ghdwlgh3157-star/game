@@ -1,190 +1,372 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Feed</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  background:#f5f5f5;color:#111;
-  font-family:Arial,"Pretendard","Noto Sans KR",sans-serif;
-}
-.app{max-width:760px;margin:0 auto;background:#fff;min-height:100vh}
-header{
-  position:sticky;top:0;z-index:10;
-  height:64px;background:rgba(255,255,255,.94);
-  backdrop-filter:blur(15px);
-  border-bottom:1px solid #eee;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;
-}
-.logo{font-size:21px;font-weight:800;letter-spacing:-1px}
-.header-icon{font-size:22px}
-.feed{padding-bottom:40px}
-.post{border-bottom:1px solid #eee;background:#fff}
-.post-head{
-  height:58px;display:flex;align-items:center;
-  padding:0 16px;gap:11px;
-}
-.avatar{
-  width:34px;height:34px;border-radius:50%;
-  background:linear-gradient(135deg,#8176ff,#c4bfff);
-  display:flex;align-items:center;justify-content:center;
-  color:white;font-size:15px;font-weight:800;
-}
-.user-info{flex:1}
-.username{font-size:13px;font-weight:700}
-.location{font-size:10px;color:#999;margin-top:2px}
-.more{font-size:20px;color:#777}
-.cover{
-  position:relative;width:100%;aspect-ratio:1/1;
-  overflow:hidden;background:#09090c;cursor:pointer;
-}
-.cover::before{
-  content:"";position:absolute;inset:-20%;
-  background:
-    radial-gradient(circle at 50% 45%,rgba(119,105,255,.32),transparent 35%),
-    radial-gradient(circle at 80% 20%,rgba(0,210,255,.14),transparent 30%);
-}
-.grid{
-  position:absolute;inset:-50%;
-  background-image:
-    linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
-  background-size:45px 45px;
-  transform:perspective(450px) rotateX(58deg) translateY(22%);
-}
-.cover-content{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;text-align:center;color:white;
-}
-.badge{
-  padding:7px 13px;border:1px solid rgba(255,255,255,.14);
-  border-radius:30px;background:rgba(255,255,255,.06);
-  font-size:9px;letter-spacing:.2em;color:#aaa;margin-bottom:20px;
-}
-.cover h1{
-  font-size:clamp(48px,9vw,78px);line-height:.86;letter-spacing:-.07em;
-  background:linear-gradient(135deg,#fff,#aaa4ff,#756cff);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.cover p{margin-top:17px;font-size:11px;letter-spacing:.2em;color:#777}
-.enter{
-  margin-top:30px;padding:12px 22px;border-radius:10px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(255,255,255,.08);color:white;
-  font-size:10px;font-weight:700;letter-spacing:.15em;transition:.25s;
-}
-.cover:hover .enter{background:rgba(125,112,255,.24);transform:translateY(-2px)}
-.actions{display:flex;align-items:center;padding:12px 16px 5px;gap:17px}
-.action{font-size:22px;cursor:pointer}
-.action.save{margin-left:auto}
-.caption{padding:4px 16px 16px;font-size:13px;line-height:1.55}
-.caption b{margin-right:5px}
-.time{padding:0 16px 17px;font-size:10px;color:#aaa}
-.placeholder{
-  height:420px;display:flex;align-items:center;justify-content:center;
-  color:#bbb;font-size:12px;letter-spacing:.08em;
-}
-@media(min-width:761px){
-  body{padding:20px 0}
-  .app{border:1px solid #e8e8e8;box-shadow:0 10px 40px rgba(0,0,0,.05)}
-}
-.suno-cover::before{background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.16),transparent 35%),radial-gradient(circle at 80% 20%,rgba(180,180,255,.12),transparent 30%)}
-.suno-cover{background:#151515}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹 미니게임 천국 | Mini Game Hub</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover: #2d3d54;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --success: #10b981;
+            --danger: #ef4444;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .game-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent);
+            box-shadow: 0 12px 30px -10px var(--accent-glow);
+            background-color: var(--card-hover);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .game-icon {
+            font-size: 2rem;
+            line-height: 1;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .game-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .game-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            margin-bottom: 12px;
+            align-self: flex-start;
+        }
+
+        .game-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 14px;
+            margin-top: auto;
+        }
+
+        .best-score-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .best-score-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .play-btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .game-card:hover .play-btn {
+            background-color: #2563eb;
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-<header>
-<div class="logo">game.feed</div>
-<div class="header-icon">♡</div>
-</header>
-<main class="feed">
-<article class="post">
-<div class="post-head">
-<div class="avatar">G</div>
-<div class="user-info">
-<div class="username">game.space</div>
-<div class="location">GAME COLLECTION</div>
-</div>
-<div class="more">•••</div>
-</div>
-<div class="cover" id="gameSpace" role="link" tabindex="0" aria-label="Game Space 열기">
-<div class="grid"></div>
-<div class="cover-content">
-<div class="badge">GAME COLLECTION</div>
-<h1>GAME<br>SPACE</h1>
-<p>PLAY · ENJOY · REPEAT</p>
-<div class="enter">GAME START&nbsp; →</div>
-</div>
-</div>
-<div class="actions">
-<span class="action like" onclick="toggleLike(this)">♡</span>
-<span class="action">○</span>
-<span class="action">↗</span>
-<span class="action save">♧</span>
-</div>
-<div class="caption"><b>game.space</b> 새로운 게임을 만나보세요 🎮</div>
-<div class="time">JUST NOW</div>
-</article>
-<article class="post">
-<div class="post-head">
-<div class="avatar" style="background:#222;color:#fff">♪</div>
-<div class="user-info">
-<div class="username">suno.music</div>
-<div class="location">MUSIC</div>
-</div>
-<div class="more">•••</div>
-</div>
-<div class="cover suno-cover" id="sunoMusic" role="link" tabindex="0" aria-label="Suno 음악 열기">
-<div class="cover-content">
-<div class="badge">SUNO MUSIC</div>
-<h1>MUSIC<br>SPACE</h1>
-<p>LISTEN · FEEL · ENJOY</p>
-<div class="enter">LISTEN NOW&nbsp; →</div>
-</div>
-</div>
-<div class="actions">
-<span class="action like" onclick="toggleLike(this)">♡</span>
-<span class="action">○</span>
-<span class="action">↗</span>
-<span class="action save">♧</span>
-</div>
-<div class="caption"><b>suno.music</b> 나만의 음악을 들어보세요 🎵</div>
-<div class="time">JUST NOW</div>
-</article>
-<article class="post">
-<div class="post-head">
-<div class="avatar" style="background:#ddd;color:#888">+</div>
-<div class="user-info">
-<div class="username">coming soon</div>
-<div class="location">MORE GAMES</div>
-</div>
-</div>
-<div class="placeholder">NEXT GAME COMING SOON</div>
-</article>
-</main>
-</div>
-<script>
-const gameURL = "https://ghdwlgh3157-star.github.io/game/";
-const cover = document.getElementById("gameSpace");
-const sunoURL = "https://suno.com/song/38f18cc2-1899-4df9-af76-ee7488f632d9";
-const suno = document.getElementById("sunoMusic");
-function openGame(){ window.location.href = gameURL; }
-cover.addEventListener("click", openGame);
-cover.addEventListener("keydown", e => {
-  if(e.key === "Enter" || e.key === " ") openGame();
-});
-function openSuno(){ window.location.href = sunoURL; }
-suno.addEventListener("click", openSuno);
-suno.addEventListener("keydown", e => {
-  if(e.key === "Enter" || e.key === " ") openSuno();
-});
-function toggleLike(el){
-  el.textContent = el.textContent === "♡" ? "♥" : "♡";
-}
-</script>
+
+    <header>
+        <h1>🎮 Web Mini Game Hub</h1>
+        <p>순발력, 집중력, 반응속도를 테스트하는 6가지 브라우저 미니게임 아케이드입니다.<br>원하는 게임을 선택해 당신의 최고 기록에 도전하세요!</p>
+    </header>
+
+    <main class="container">
+        <div class="game-grid">
+            
+            <!-- Game 1 -->
+            <a href="game1.html" class="game-card">
+                <div>
+                    <span class="game-tag">순발력 / 감각</span>
+                    <div class="card-header">
+                        <div class="game-icon">⏱️</div>
+                        <div class="game-title">눈감고 7.00초 점프</div>
+                    </div>
+                    <p class="game-desc">3초 후 가려지는 타이머! 오직 감각만으로 정확히 7.00초 순간을 맞춰 스톱 버튼을 누르세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최고 오차</div>
+                        <div class="best-score-val" id="g1-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+            <!-- Game 2 -->
+            <a href="game2.html" class="game-card">
+                <div>
+                    <span class="game-tag">색각 / 관찰력</span>
+                    <div class="card-header">
+                        <div class="game-icon">👁️</div>
+                        <div class="game-title">카멜레온 스파이 찾기</div>
+                    </div>
+                    <p class="game-desc">라운드가 올라갈수록 미세해지는 색상 차이! 제한 시간 안에서 단 하나만 다른 스파이 타일을 찾아내세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최고 도달 라운드</div>
+                        <div class="best-score-val" id="g2-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+            <!-- Game 3 -->
+            <a href="game3.html" class="game-card">
+                <div>
+                    <span class="game-tag">타이밍 / 리듬</span>
+                    <div class="card-header">
+                        <div class="game-icon">⚡</div>
+                        <div class="game-title">타이밍 리듬 브레이커</div>
+                    </div>
+                    <p class="game-desc">빠르게 왕복하는 바늘이 초록색 크리티컬 존을 지나는 순간 클릭(또는 스페이스바)하여 연속 콤보를 달성하세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최고 연속 콤보</div>
+                        <div class="best-score-val" id="g3-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+            <!-- Game 4 -->
+            <a href="game4.html" class="game-card">
+                <div>
+                    <span class="game-tag">컨트롤 / 피지컬</span>
+                    <div class="card-header">
+                        <div class="game-icon">☄️</div>
+                        <div class="game-title">마우스 탄막 회피령</div>
+                    </div>
+                    <p class="game-desc">사방에서 무작위로 날아드는 구체 탄막들! 마우스 커서를 정밀하게 컨트롤하여 최대한 오랫동안 살아남으세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최장 생존 시간</div>
+                        <div class="best-score-val" id="g4-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+            <!-- Game 5 -->
+            <a href="game5.html" class="game-card">
+                <div>
+                    <span class="game-tag">뇌풀기 / 억제력</span>
+                    <div class="card-header">
+                        <div class="game-icon">🧠</div>
+                        <div class="game-title">스트룹 뇌 정지 제어기</div>
+                    </div>
+                    <p class="game-desc">글자가 뜻하는 단어에 속지 마세요! 눈에 보이는 '실제 폰트 색상'을 빠르게 판단하여 올바른 버튼을 클릭하세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최고 점수</div>
+                        <div class="best-score-val" id="g5-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+            <!-- Game 6 -->
+            <a href="game6.html" class="game-card">
+                <div>
+                    <span class="game-tag">반응속도 / 피지컬</span>
+                    <div class="card-header">
+                        <div class="game-icon">🚀</div>
+                        <div class="game-title">중력 반전 러너</div>
+                    </div>
+                    <p class="game-desc">화면을 클릭할 때마다 중력이 상하로 반전됩니다. 천장과 바닥을 타며 다가오는 장애물을 돌파하세요.</p>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <div class="best-score-label">최고 생존 점수</div>
+                        <div class="best-score-val" id="g6-best">-</div>
+                    </div>
+                    <span class="play-btn">플레이 →</span>
+                </div>
+            </a>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>© HTML5 Canvas & JavaScript Mini Games Arcade</p>
+        <button class="reset-btn" onclick="resetAllScores()">전체 기록 초기화</button>
+    </footer>
+
+    <script>
+        // Load High Scores from LocalStorage
+        function loadScores() {
+            // Game 1
+            const g1 = localStorage.getItem('g1_best');
+            document.getElementById('g1-best').innerText = g1 !== null ? `±${parseFloat(g1).toFixed(2)}초` : '기록 없음';
+
+            // Game 2
+            const g2 = localStorage.getItem('g2_best');
+            document.getElementById('g2-best').innerText = g2 !== null ? `${g2} 라운드` : '기록 없음';
+
+            // Game 3
+            const g3 = localStorage.getItem('g3_best');
+            document.getElementById('g3-best').innerText = g3 !== null ? `${g3} 콤보` : '기록 없음';
+
+            // Game 4
+            const g4 = localStorage.getItem('g4_best');
+            document.getElementById('g4-best').innerText = g4 !== null ? `${parseFloat(g4).toFixed(1)}초` : '기록 없음';
+
+            // Game 5
+            const g5 = localStorage.getItem('g5_best');
+            document.getElementById('g5-best').innerText = g5 !== null ? `${g5}점` : '기록 없음';
+
+            // Game 6
+            const g6 = localStorage.getItem('g6_best');
+            document.getElementById('g6-best').innerText = g6 !== null ? `${g6}점` : '기록 없음';
+        }
+
+        // Reset all local storage records
+        function resetAllScores() {
+            if (confirm('저장된 모든 게임의 최고 기록을 초기화하시겠습니까?')) {
+                localStorage.removeItem('g1_best');
+                localStorage.removeItem('g2_best');
+                localStorage.removeItem('g3_best');
+                localStorage.removeItem('g4_best');
+                localStorage.removeItem('g5_best');
+                localStorage.removeItem('g6_best');
+                loadScores();
+                alert('기록이 초기화되었습니다.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadScores);
+    </script>
 </body>
 </html>
